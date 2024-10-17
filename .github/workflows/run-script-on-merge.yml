@@ -27,4 +27,4 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        python script.py ${{ github.event.repository.full_name }} ${{ github.event.pull_request.number }}
+        python script.py ${{ github.repository }} ${{ github.event.pull_request.number }} ${{ secrets.GITHUB_TOKEN }}
