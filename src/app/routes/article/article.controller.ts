@@ -13,8 +13,30 @@ import {
   unfavoriteArticle,
   updateArticle,
 } from './article.service';
+import { getProfile } from './profile.service';
 
 const router = Router();
+
+
+/**
+ * Get profile
+ * @auth optional
+ * @route {GET} /profiles/:username
+ * @param username string
+ * @returns profile
+ */
+router.get(
+  '/profiles/:username',
+  auth.optional,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const profile = await getProfile(req.params.username, req.auth?.user?.id);
+      res.json({ profile });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
 /**
  * Get paginated articles
