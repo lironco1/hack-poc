@@ -2,17 +2,14 @@ import logging
 import sys
 from github import Github
 
-
 def get_pull_requests(repo):
     pulls = repo.get_pulls(state='open', sort='created')
     return pulls
-
 
 def get_files_from_pr(repo, pr_number):
     pr = repo.get_pull(pr_number)
     files = pr.get_files()
     return files
-
 
 def get_all_files_from_src(repo):
     src_files = repo.get_contents("src")
@@ -25,8 +22,7 @@ def get_all_files_from_src(repo):
             else:
                 try:
                     # get the contents only files ending with .ts
-                    if file.path.endswith(".ts") and not file.path.endswith(".d.ts") and not file.path.endswith(
-                            "test.ts"):
+                    if file.path.endswith(".ts") and not file.path.endswith(".d.ts") and not file.path.endswith("test.ts"):
                         all_files[file.path] = repo.get_contents(file.path).decoded_content.decode()
                 except Exception as e:
                     print(f"Error reading {e}")
@@ -34,12 +30,10 @@ def get_all_files_from_src(repo):
     fetch_files(src_files)
     return all_files
 
-
-def main(repo_name, pr_number):
-    token = sys.argv[1]
+def main(repo_name, pr_number, token):
     g = Github(token)
     repo = g.get_repo(repo_name)
-
+    
     pr = repo.get_pull(pr_number)
     print(f"PR #{pr.number}: {pr.title} by {pr.user.login}")
     files = get_files_from_pr(repo, pr.number)
@@ -61,12 +55,12 @@ def main(repo_name, pr_number):
             f.write("--------------------------------\n")
             f.write(content)
 
-
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    if len(sys.argv) != 3:
-        print("Usage: script.py <repo_name> <pr_number>")
+    if len(sys.argv) != 4:
+        print("Usage: script.py <repo_name> <pr_number> <token>")
         sys.exit(1)
     repo_name = sys.argv[1]
     pr_number = int(sys.argv[2])
-    main(repo_name, pr_number)
+    token = sys.argv[3]
+    main(repo_name, pr_number, token)
