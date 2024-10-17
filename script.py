@@ -60,6 +60,10 @@ if __name__ == "__main__":
     if len(sys.argv) != 4:
         print("Usage: script.py <repo_name> <pr_number> <token>")
         sys.exit(1)
+    print(sys.argv[0])
+    print(sys.argv[1])
+    print(sys.argv[2])
+    print(sys.argv[3])
     repo_name = sys.argv[1]
     pr_number = int(sys.argv[2])
     token = sys.argv[3]
