@@ -1,0 +1,30 @@
+name: Run Script on Merge
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  run-script:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install PyGithub
+
+    - name: Run Python script
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        python script.py ${{ github.event.repository.full_name }} ${{ github.event.pull_request.number }}
