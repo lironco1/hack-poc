@@ -3,6 +3,8 @@ import sys
 import subprocess
 import os
 from github import Github
+import psycopg2
+from datetime import datetime
 
 def get_pull_requests(repo):
     pulls = repo.get_pulls(state='open', sort='created')
@@ -51,18 +53,38 @@ def minify_content(content):
 
     return minified_content
 
-def main(repo_name, pr_number, token):
+def save_to_database(pr_number, pr_title, pr_diff, minified_data, db_config):
+    try:
+        connection = psycopg2.connect(**db_config)
+        cursor = connection.cursor()
+
+        insert_query = """
+        INSERT INTO pr_data (pr_number, pr_title, pr_diff, minified_data, created_at)
+        VALUES (%s, %s, %s, %s, %s)
+        """
+        cursor.execute(insert_query, (pr_number, pr_title, pr_diff, minified_data, datetime.now()))
+
+        connection.commit()
+        cursor.close()
+        connection.close()
+    except Exception as e:
+        print(f"Error saving to database: {e}")
+
+def main(repo_name, pr_number, token, db_config):
     g = Github(token)
     repo = g.get_repo(repo_name)
 
     pr = repo.get_pull(pr_number)
     print(f"PR #{pr.number}: {pr.title} by {pr.user.login}")
+    print("--------------------------------")
+    print("--------------------------------")
     files = get_files_from_pr(repo, pr.number)
+    pr_diff = ""
     for file in files:
         filename = file.filename
         print(f"  - {filename}")
+        pr_diff += file.raw_data['patch'] + "\n"
         print(file.raw_data['patch'])
-        print("--------------------------------")
         print("--------------------------------")
         print("--------------------------------")
 
@@ -70,24 +92,44 @@ def main(repo_name, pr_number, token):
     all_files = get_all_files_from_src(repo)
 
     # save all files values into a txt file
+    minified_data = ""
     with open("all_files.txt", "w") as f:
         for file_path, content in all_files.items():
             minified_content = minify_content(content)
+            minified_data += minified_content + "\n"
+            print(minified_content)
+            print("--------------------------------")
+            print("--------------------------------")
             f.write("-------------\n")
             f.write(f"File: {file_path}\n")
             f.write("-------------\n")
             f.write(minified_content)
 
+    # Save data to database
+    save_to_database(pr.number, pr.title, pr_diff, minified_data, db_config)
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    if len(sys.argv) != 4:
-        print("Usage: script.py <repo_name> <pr_number> <token>")
+    if len(sys.argv) != 8:
+        print("Usage: script.py <repo_name> <pr_number> <token> <db_host> <db_name> <db_user> <db_password>")
         sys.exit(1)
     print(sys.argv[0])
     print(sys.argv[1])
     print(sys.argv[2])
     print(sys.argv[3])
+    print(sys.argv[4])
+    print(sys.argv[5])
+    print(sys.argv[6])
+    print(sys.argv[7])
+    print("--------------------------------")
+    print("--------------------------------")
     repo_name = sys.argv[1]
     pr_number = int(sys.argv[2])
     token = sys.argv[3]
-    main(repo_name, pr_number, token)
+    db_config = {
+        'host': sys.argv[4],
+        'dbname': sys.argv[5],
+        'user': sys.argv[6],
+        'password': sys.argv[7]
+    }
+    main(repo_name, pr_number, token, db_config)
