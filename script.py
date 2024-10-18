@@ -35,9 +35,12 @@ def get_all_files_from_src(repo):
     fetch_files(src_files)
     return all_files
 
-def minify_content(content):
+def minify_content(file_path, content):
     # Write the content to a temporary file
     with open("temp_input.txt", "w") as temp_input_file:
+        temp_input_file.write("-------------\n")
+        temp_input_file.write(f"File: {file_path}\n")
+        temp_input_file.write("-------------\n")
         temp_input_file.write(content)
 
     # Call the minify.sh script
@@ -60,7 +63,7 @@ def save_to_database(pr_number, pr_title, pr_diff_code, code, user_name, repo_ow
 
         insert_query = """
         INSERT INTO pr_data (pr_number, pr_title, pr_diff_code, code, user_name, repo_owner, provider, created_at)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """
         cursor.execute(insert_query, (pr_number, pr_title, pr_diff_code, code, user_name, repo_owner, provider, datetime.now()))
 
@@ -69,6 +72,7 @@ def save_to_database(pr_number, pr_title, pr_diff_code, code, user_name, repo_ow
         connection.close()
     except Exception as e:
         print(f"Error saving to database: {e}")
+
 
 
 def main(repo_name, pr_number, token, db_config):
@@ -98,17 +102,19 @@ def main(repo_name, pr_number, token, db_config):
 
     # save all files values into a txt file
     code = ""
-    with open("all_files.txt", "w") as f:
-        for file_path, content in all_files.items():
-            minified_content = minify_content(content)
-            code += minified_content + "\n"
-            print(minified_content)
-            print("--------------------------------")
-            print("--------------------------------")
-            f.write("-------------\n")
-            f.write(f"File: {file_path}\n")
-            f.write("-------------\n")
-            f.write(minified_content)
+    for file_path, content in all_files.items():
+        minified_content = minify_content(file_path, content)
+        code += minified_content + "\n"
+
+
+    # Print values before saving to database
+    print("Saving to database with the following values:")
+    print(f"pr_number: {pr.number}")
+    print(f"pr_title: {pr.title}")
+    print(f"pr_diff_code: {pr_diff_code}")
+    print(f"user_name: {user_name}")
+    print(f"repo_owner: {repo_owner}")
+    print(f"provider: {provider}")
 
     # Save data to database
     save_to_database(pr.number, pr.title, pr_diff_code, code, user_name, repo_owner, provider, db_config)
