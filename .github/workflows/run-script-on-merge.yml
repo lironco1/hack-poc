@@ -21,7 +21,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install PyGithub
+        pip install PyGithub psycopg2-binary
 
     - name: Set execute permissions for minify.sh
       run: chmod +x minify.sh
@@ -29,5 +29,9 @@ jobs:
     - name: Run Python script
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
+        POSTGRES_DATABASE: ${{ secrets.POSTGRES_DATABASE }}
+        POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+        POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       run: |
-        python script.py ${{ github.repository }} ${{ github.event.pull_request.number }} ${{ secrets.GITHUB_TOKEN }}
+        python script.py ${{ github.repository }} ${{ github.event.pull_request.number }} ${{ secrets.GITHUB_TOKEN }} ${{ secrets.POSTGRES_HOST }} ${{ secrets.POSTGRES_DATABASE }} ${{ secrets.POSTGRES_USER }} ${{ secrets.POSTGRES_PASSWORD }}
