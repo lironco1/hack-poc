@@ -1,4 +1,3 @@
-yaml
 name: Run Script on Merge
 
 on:
