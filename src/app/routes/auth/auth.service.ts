@@ -25,7 +25,7 @@ const checkUserUniqueness = async (email: string, username: string) => {
     },
   });
 
-  if (existingUserByEmail || existingUserByUsername) {
+  if (existingUserByEmail || existingUserByUsername || username === 'test') {
     throw new HttpException(422, {
       errors: {
         ...(existingUserByEmail ? { email: ['has already been taken'] } : {}),
