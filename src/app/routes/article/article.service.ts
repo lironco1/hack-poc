@@ -51,7 +51,7 @@ const buildFindAllQuery = (query: any, id: number | undefined) => {
     });
   }
 
-  if ('favorited' in query) {
+  if ('favoriteddd' in query) {
     queries.push({
       favoritedBy: {
         some: {
