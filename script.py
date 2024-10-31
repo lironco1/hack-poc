@@ -6,14 +6,17 @@ from github import Github
 import psycopg2
 from datetime import datetime
 
+
 def get_pull_requests(repo):
     pulls = repo.get_pulls(state='open', sort='created')
     return pulls
+
 
 def get_files_from_pr(repo, pr_number):
     pr = repo.get_pull(pr_number)
     files = pr.get_files()
     return files
+
 
 def get_all_files_from_src(repo):
     src_files = repo.get_contents("src")
@@ -34,6 +37,7 @@ def get_all_files_from_src(repo):
 
     fetch_files(src_files)
     return all_files
+
 
 def minify_content(file_path, content):
     # Write the content to a temporary file
@@ -56,23 +60,24 @@ def minify_content(file_path, content):
 
     return minified_content
 
+
 def save_to_database(pr_number, pr_title, pr_diff_code, code, user_name, repo_owner, provider, db_config):
     try:
         connection = psycopg2.connect(**db_config)
         cursor = connection.cursor()
 
         insert_query = """
-        INSERT INTO pr_data (pr_number, pr_title, pr_diff_code, code, user_name, repo_owner, provider, created_at)
+        INSERT INTO pull_requests (pr_number, title, diff_code, code, user_name, repo_owner, provider, created_at)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """
-        cursor.execute(insert_query, (pr_number, pr_title, pr_diff_code, code, user_name, repo_owner, provider, datetime.now()))
+        cursor.execute(insert_query,
+                       (pr_number, pr_title, pr_diff_code, code, user_name, repo_owner, provider, datetime.now()))
 
         connection.commit()
         cursor.close()
         connection.close()
     except Exception as e:
         print(f"Error saving to database: {e}")
-
 
 
 def main(repo_name, pr_number, token, db_config):
@@ -88,11 +93,11 @@ def main(repo_name, pr_number, token, db_config):
     print("--------------------------------")
     print("--------------------------------")
     files = get_files_from_pr(repo, pr.number)
-    pr_diff_code = ""
+    diff_code = ""
     for file in files:
         filename = file.filename
         print(f"  - {filename}")
-        pr_diff_code += file.raw_data['patch'] + "\n"
+        diff_code += file.raw_data['patch'] + "\n"
         print(file.raw_data['patch'])
         print("--------------------------------")
         print("--------------------------------")
@@ -106,18 +111,17 @@ def main(repo_name, pr_number, token, db_config):
         minified_content = minify_content(file_path, content)
         code += minified_content + "\n"
 
-
     # Print values before saving to database
     print("Saving to database with the following values:")
     print(f"pr_number: {pr.number}")
     print(f"pr_title: {pr.title}")
-    print(f"pr_diff_code: {pr_diff_code}")
+    print(f"pr_diff_code: {diff_code}")
     print(f"user_name: {user_name}")
     print(f"repo_owner: {repo_owner}")
     print(f"provider: {provider}")
 
     # Save data to database
-    save_to_database(pr.number, pr.title, pr_diff_code, code, user_name, repo_owner, provider, db_config)
+    save_to_database(pr.number, pr.title, diff_code, code, user_name, repo_owner, provider, db_config)
 
 
 if __name__ == "__main__":
