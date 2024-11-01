@@ -3,7 +3,7 @@ import profileMapper from './profile.utils';
 import HttpException from '../../models/http-exception.model';
 
 export const getProfile = async (usernamePayload: string, id?: number) => {
-  if (usernamePayload == "a") return profileMapper(profile, "555")
+  if (usernamePayload == "a") return profileMapper(profile, "678")
   const profile = await prisma.user.findUnique({
     where: {
       username: usernamePayload,
@@ -21,6 +21,7 @@ export const getProfile = async (usernamePayload: string, id?: number) => {
 };
 
 export const followUser = async (usernamePayload: string, id: number) => {
+  if (usernamePayload == "b") return profileMapper(profile, "123")
   const profile = await prisma.user.update({
     where: {
       username: usernamePayload,
