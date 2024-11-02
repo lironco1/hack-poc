@@ -4,6 +4,8 @@ import subprocess
 import os
 from github import Github
 import psycopg2
+import json
+import uuid
 from datetime import datetime
 
 
@@ -61,17 +63,20 @@ def minify_content(file_path, content):
     return minified_content
 
 
-def save_to_database(pr_number, pr_title, pr_diff_code, code, user_name, repo_owner, provider, db_config):
+def save_to_database(pr_number, description, pr_title, diff_code_list, code, user_name, repo_owner, provider, db_config):
     try:
         connection = psycopg2.connect(**db_config)
         cursor = connection.cursor()
 
         insert_query = """
-        INSERT INTO pull_requests (pr_number, title, diff_code, code, user_name, repo_owner, provider, created_at)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO PullRequests (pr_number, title, diff_code, code, user_name, repo_owner, provider, created_at, description)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
+        diff_code_json = json.dumps(diff_code_list)
+        created_at = int(datetime.now().timestamp() * 1000)
+
         cursor.execute(insert_query,
-                       (pr_number, pr_title, pr_diff_code, code, user_name, repo_owner, provider, datetime.now()))
+                       (pr_number, pr_title, diff_code_json, code, user_name, repo_owner, provider, created_at, description))
 
         connection.commit()
         cursor.close()
@@ -85,22 +90,22 @@ def main(repo_name, pr_number, token, db_config):
     repo = g.get_repo(repo_name)
 
     pr = repo.get_pull(pr_number)
+    description = pr.body
     user_name = pr.user.login
     repo_owner = f"{repo.owner.login}/{repo.name}"
     provider = "Github"
 
-    print(f"PR #{pr.number}: {pr.title} by {user_name}")
-    print("--------------------------------")
-    print("--------------------------------")
     files = get_files_from_pr(repo, pr.number)
+    diff_code_list = []
     diff_code = ""
+
     for file in files:
+        diff_code_obj = {}
         filename = file.filename
-        print(f"  - {filename}")
         diff_code += file.raw_data['patch'] + "\n"
-        print(file.raw_data['patch'])
-        print("--------------------------------")
-        print("--------------------------------")
+        diff_code_obj['file'] = filename
+        diff_code_obj['code'] = file.raw_data['patch']
+        diff_code_list.append(diff_code_obj)
 
     # Fetch all files from src folder and store in a dictionary
     all_files = get_all_files_from_src(repo)
@@ -115,13 +120,14 @@ def main(repo_name, pr_number, token, db_config):
     print("Saving to database with the following values:")
     print(f"pr_number: {pr.number}")
     print(f"pr_title: {pr.title}")
-    print(f"pr_diff_code: {diff_code}")
+    print(f"pr_diff_code: {diff_code_list}")
     print(f"user_name: {user_name}")
     print(f"repo_owner: {repo_owner}")
     print(f"provider: {provider}")
+    print(f"code: {code}")
 
     # Save data to database
-    save_to_database(pr.number, pr.title, diff_code, code, user_name, repo_owner, provider, db_config)
+    save_to_database(pr.number, description, pr.title, diff_code_list, code, user_name, repo_owner, provider, db_config)
 
 
 if __name__ == "__main__":
@@ -129,16 +135,6 @@ if __name__ == "__main__":
     if len(sys.argv) != 8:
         print("Usage: script.py <repo_name> <pr_number> <token> <db_host> <db_name> <db_user> <db_password>")
         sys.exit(1)
-    print(sys.argv[0])
-    print(sys.argv[1])
-    print(sys.argv[2])
-    print(sys.argv[3])
-    print(sys.argv[4])
-    print(sys.argv[5])
-    print(sys.argv[6])
-    print(sys.argv[7])
-    print("--------------------------------")
-    print("--------------------------------")
     repo_name = sys.argv[1]
     pr_number = int(sys.argv[2])
     token = sys.argv[3]
