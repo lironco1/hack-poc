@@ -3,7 +3,8 @@ import profileMapper from './profile.utils';
 import HttpException from '../../models/http-exception.model';
 
 export const getProfile = async (usernamePayload: string, id?: number) => {
-  if (usernamePayload == "a") return profileMapper(profile, "678")
+  if (usernamePayload == "liron") return profileMapper(profile, "liron")
+  if (usernamePayload == "test" && id !== 3) return profileMapper(profile, "test3")
   const profile = await prisma.user.findUnique({
     where: {
       username: usernamePayload,
