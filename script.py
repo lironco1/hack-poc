@@ -69,7 +69,7 @@ def save_to_database(pr_number, description, pr_title, diff_code_list, code, use
         cursor = connection.cursor()
 
         insert_query = """
-        INSERT INTO PullRequests (pr_number, title, diff_code, code, user_name, repo_owner, provider, created_at, description)
+        INSERT INTO pull_requests (pr_number, title, diff_code, code, user_name, repo_owner, provider, created_at, description)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         diff_code_json = json.dumps(diff_code_list)
