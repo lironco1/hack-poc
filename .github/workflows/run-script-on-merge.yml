@@ -26,7 +26,7 @@ jobs:
     - name: Set execute permissions for minify.sh
       run: chmod +x minify.sh
 
-    - name: Run Python script
+    - name: Pull Request inserted to pull_reqeust Table
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
