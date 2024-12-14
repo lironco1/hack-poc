@@ -18,6 +18,6 @@ sed '/\/\*/,/\*\//d' |  # Remove block comments
 sed 's://.*$::' |       # Remove line comments
 perl -pe 'next if /^$/; next if /^"/ and /"$/; s/^\s+|\s+$//g; s/\s*([\!\+\-\*\/\(\)\{\}\=\.\>\<\&\|\,\:])\s*/$1/g; if (!/[\}\)\;]\s*$/) { s/$/ /; } else { s/\s*$//; }' |  # Remove unnecessary whitespaces
 tr -d '\n' |            # Remove newlines
-sed 's/\s\+//g' > "$output_file"  # Remove remaining spaces
+sed 's/\s\{2,\}/ /g' > "$output_file"  # Replace multiple spaces with a single space
 
 echo "Minified code has been saved to $output_file"
